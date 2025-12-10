@@ -67,43 +67,49 @@ public class Event {
     public boolean isInDay(LocalDate aDay) {
         // Cas 1 : Événement non répétitif
         if (repetition == null) {
-            LocalDate startDate = myStart.toLocalDate();
-            // La date de fin tient compte de la durée (pour les événements qui passent minuit)
-            LocalDate endDate = myStart.plus(myDuration).toLocalDate();
-            
-            // L'événement a lieu si aDay est compris entre startDate et endDate (inclus)
-            return !aDay.isBefore(startDate) && !aDay.isAfter(endDate);
+            LocalDateTime endDateTime = myStart.plus(myDuration);
+            LocalDate start = myStart.toLocalDate();
+            LocalDate end = endDateTime.toLocalDate();
+            return !aDay.isBefore(start) && !aDay.isAfter(end);
         }
 
         // Cas 2 : Événement répétitif
-        
-        // a. Vérifier si c'est une exception
-        if (repetition.isException(aDay)) {
-            return false;
-        }
-
         LocalDate startDate = myStart.toLocalDate();
+        ChronoUnit frequency = repetition.getFrequency();
 
-        // b. Vérifier si la date est avant le début de l'événement
+        // Si la date demandée est avant le tout début de l'événement, c'est faux
         if (aDay.isBefore(startDate)) {
             return false;
         }
 
-        // c. Vérifier la date de fin (Termination) si elle existe
+        // On cherche l'occurrence qui aurait commencé au plus près de aDay
+        long units = frequency.between(startDate, aDay);
+        LocalDate occurrenceDate = startDate.plus(units, frequency);
+
+        // a. Vérifier si cette occurrence est une exception
+        if (repetition.isException(occurrenceDate)) {
+            return false;
+        }
+
+        // b. Vérifier la terminaison (CRITIQUE : on vérifie la date de DÉBUT de l'occurrence)
         Termination termination = repetition.getTermination();
         if (termination != null) {
-            if (aDay.isAfter(termination.terminationDateInclusive())) {
+            LocalDate termDate = termination.terminationDateInclusive();
+            // Si l'occurrence commence APRÈS la date de fin prévue, c'est faux
+            if (termDate != null && occurrenceDate.isAfter(termDate)) {
                 return false;
             }
         }
 
-        // d. Vérifier la fréquence (C'est ici que résidait l'erreur principale)
-        // On calcule le nombre d'unités de temps entre le début et le jour testé
-        long units = repetition.getFrequency().between(startDate, aDay);
-        // On vérifie si en ajoutant ces unités au départ, on retombe exactement sur aDay
-        LocalDate calculatedDate = startDate.plus(units, repetition.getFrequency());
+        // c. Vérifier si l'occurrence couvre effectivement aDay (gestion du débordement)
+        LocalDateTime occurrenceStart = occurrenceDate.atTime(myStart.toLocalTime());
+        LocalDateTime occurrenceEnd = occurrenceStart.plus(myDuration);
         
-        return calculatedDate.equals(aDay);
+        LocalDate s = occurrenceStart.toLocalDate();
+        LocalDate e = occurrenceEnd.toLocalDate();
+
+        // L'événement a lieu si aDay est compris entre le début et la fin de cette occurrence
+        return !aDay.isBefore(s) && !aDay.isAfter(e);
     }
 
     public String getTitle() {
@@ -120,6 +126,6 @@ public class Event {
 
     @Override
     public String toString() {
-        return "Event{title='%s', start=%s, duration=%s}".formatted(myTitle, myStart, myDuration);
+        return String.format("Event{title='%s', start=%s, duration=%s}", myTitle, myStart, myDuration);
     }
 }

@@ -40,9 +40,7 @@ public class Agenda {
             LocalDateTime existingStart = existing.getStart();
             LocalDateTime existingEnd = existingStart.plus(existing.getDuration());
 
-            // Vérifie le chevauchement (Overlap logic)
-            // Si ce n'est PAS (fin avant début OU début après fin), alors ça se chevauche
-            if (!(eventEnd.isBefore(existingStart) || eventStart.isAfter(existingEnd))) {
+            if (eventStart.isBefore(existingEnd) && eventEnd.isAfter(existingStart)) {
                 return false;
             }
         }
