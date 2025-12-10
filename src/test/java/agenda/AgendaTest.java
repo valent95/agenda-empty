@@ -71,4 +71,34 @@ public class AgendaTest {
         assertTrue(agenda.eventsInDay(nov_1_2020).contains(neverEnding));
     }
 
+    @Test
+    public void testFindByTitle() {
+        // Test: trouver un événement par titre exact
+        var results = agenda.findByTitle("Simple event");
+        assertEquals(1, results.size(), "Doit trouver un événement avec le titre 'Simple event'");
+        assertTrue(results.contains(simple), "Le résultat doit contenir l'événement simple");
+
+        // Test: trouver plusieurs événements avec le même titre
+        var fixedResults = agenda.findByTitle("Fixed termination weekly");
+        assertEquals(2, fixedResults.size(), "Doit trouver 2 événements avec le titre 'Fixed termination weekly'");
+        assertTrue(fixedResults.contains(fixedTermination), "Doit contenir fixedTermination");
+        assertTrue(fixedResults.contains(fixedRepetitions), "Doit contenir fixedRepetitions");
+
+        // Test: aucun événement trouvé
+        var noneFound = agenda.findByTitle("Non existent event");
+        assertEquals(0, noneFound.size(), "Doit retourner une liste vide pour un titre non existant");
+    }
+
+    @Test
+    public void testIsFreeForNonOverlappingEvent() {
+        // Test: un événement qui ne chevauche pas les autres
+        LocalDateTime nov_2_2020_10_00 = LocalDateTime.of(2020, 11, 2, 10, 0);
+        Event nonOverlappingEvent = new Event("Free slot", nov_2_2020_10_00, Duration.ofMinutes(60));
+        
+        assertTrue(agenda.isFreeFor(nonOverlappingEvent), 
+                "L'agenda doit être libre pour un événement sans chevauchement");
+    }
+
+    
+
 }
