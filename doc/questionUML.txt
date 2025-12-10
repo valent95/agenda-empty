@@ -1,2 +1,41 @@
-Ecrire ici votre réponse à la question UML.
+La solution qu'on a réaliser :
 
+Les avantages :
+
+-   Polymorphisme strict : C'est propre au niveau du code. Chaque classe a sa propre implémentation de isInDay(). Pas besoin de if (repetition != null) dans la classe mère, on surcharge juste la méthode.
+
+-   Typage fort : On sait immédiatement à la compilation si on manipule un événement simple ou répétitif.
+
+Les inconvénients :
+
+-   Rigidité au Runtime : C'est le gros point noir. Une fois que j'ai fait un new Event(), l'objet est figé. Si l'utilisateur veut modifier un événement existant pour le rendre répétitif, je suis obligé de tuer l'instance de Event et de créer une nouvelle instance de RepetitiveEvent. C'est lourd à gérer (perte de références, d'ID, etc.).
+
+-   Explosion des classes : Si demain on ajoute des types d'événements comme Meeting (avec des participants) ou OnlineEvent (avec une URL), on fait quoi ? On crée OnlineRepetitiveEvent ? On se retrouve avec une structure en diamant ou une combinatoire de classes impossible à maintenir.
+
+-   Principe LSP (Liskov) : On risque de transgresser le principe de substitution si la classe fille change trop le comportement attendu de la classe mère.
+
+
+
+
+
+La solution proposé par un autre ingénieur :
+
+Les avantages :
+
+-   Flexibilité totale : Je peux ajouter ou supprimer une répétition "à la volée" (au runtime). Un événement simple devient répétitif juste en faisant event.setRepetition(...). Pas besoin de recréer l'objet.
+
+-   Code plus plat : On évite les hiérarchies d'héritage profondes qui deviennent vite incompréhensibles.
+
+-   Séparation des responsabilités (SRP) : La classe Event gère "Quoi et Quand", la classe Repetition gère la logique complexe de "Fréquence". Si la logique de répétition change, je ne touche pas à l'objet Event en lui-même.
+
+Les inconvénients :
+
+-   Délégation : La classe Event doit servir de "passe-plat". Dans le code, ça nous oblige à mettre des vérifications défensives comme if (repetition != null) (ce qu'on a vu dans mon code Java). C'est un peu moins élégant visuellement que le polymorphisme pur, mais c'est le prix à payer pour la souplesse.
+
+
+
+
+
+Conclusion :
+
+Dans un système d'agenda réel, un événement n'est pas fondamentalement différent parce qu'il se répète. C'est juste une caractéristique qu'on lui ajoute. L'héritage (celui proposé par l'autre ingénieur) nous enfermerait trop tôt dans une structure rigide.
